@@ -1,0 +1,5 @@
+train: /home/dsj/dataset/CLAD_split/images/train
+val: /home/dsj/dataset/CLAD_split/images/val
+
+nc: 21  # 类别数量（比如 5 种玻璃器皿）
+names: ["alcohol_lamp","beaker","boiling_flask_3_neck","boiling_flask","conical_flask","crucible","evaporating_dish","filter_flask","funnel","glass_rod","graduated_cylinder","medicine_dropper","medicine_spoon","mortar","plastic_wash_bottle","rubber_suction_bulb","separatory_funnel","test_tube","Tube_brush","volumetric_flask","wide_mouth_bottle"]
