@@ -1,0 +1,28 @@
+// ****************Train***************************
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/home/dsj/code/ultralytics/apply/train_seg.py",
+            //"python": "/home/robot/ex_2T_HDD/zhaofengan/.conda/envs/eraft/bin/python",
+            "python": "/home/dsj/miniconda3/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args":[
+                "-c", "pytorch_networks/refractive_flow/config/config.yaml"
+                // "experiments/continuous_fully_connected",
+                // "--dataset_folder","dataset",
+                // "--temporal_aggregation_type","continuous_fully_connected",
+                // "--split_number","1",
+                //"--single-cls","True"
+        ],
+            "justMyCode": true
+        }
+    ]
+}

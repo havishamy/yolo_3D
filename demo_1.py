@@ -99,11 +99,11 @@ def iou(bbox1, bbox2):
 # --------------------
 # 初始化
 # --------------------
-model = YOLO("/home/dsj/code/ultralytics/ultralytics/runs/train/yolov11_glassware/weights/best.pt")  # 替换成你的模型路径
+model = YOLO("/home/dsj/code/ultralytics/apply/ultralytics/runs/train/yolov11_glassware/weights/best.pt")  # 替换成你的模型路径
 cap = cv2.VideoCapture("/home/dsj/code/ultralytics/apply/input_2.mp4")
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter("/home/dsj/code/ultralytics/apply/tracking_output_karman_2.mp4", fourcc, cap.get(cv2.CAP_PROP_FPS),
+out = cv2.VideoWriter("/home/dsj/code/ultralytics/apply/tracking_output_karman_2_test.mp4", fourcc, cap.get(cv2.CAP_PROP_FPS),
                       (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
 
 orb = cv2.ORB_create(1000)
@@ -303,7 +303,7 @@ for tid, data in trackers.items():
     if len(data["trajectory"]) > 0:
         trajectory[tid] = np.array(data["trajectory"])
 
-np.savez("/home/dsj/code/ultralytics/apply/trajectories_2.npz", 
+np.savez("/home/dsj/code/ultralytics/apply/trajectories_2_test.npz", 
          camera_traj=camera_traj, 
          camera_poses=camera_poses, 
          **{f"object_{tid}": traj for tid, traj in trajectory.items()})

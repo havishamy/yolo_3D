@@ -1,0 +1,30 @@
+train: /home/dsj/dataset/LabPics_Chemistry_yolo_seg/images/train
+val: /home/dsj/dataset/LabPics_Chemistry_yolo_seg/images/test
+
+
+names:
+  0: Vessel
+  1: Flask
+  2: Erlenmeyer
+  3: Beaker
+  4: Cup
+  5: Funnel
+  6: Syringe
+  7: Pipette
+  8: Tube
+  9: IVBag
+  10: DripChamber
+  11: IVBottle
+  12: RoundFlask
+  13: Cylinder
+  14: SeparatoryFunnel
+  15: Burette
+  16: ChromatographyColumn
+  17: Condenser
+  18: Bottle
+  19: Jar
+  20: Connector
+  21: Bowl
+  22: Vial
+  23: Dish
+  24: HeatingVessel
