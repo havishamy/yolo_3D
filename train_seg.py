@@ -12,9 +12,9 @@ def main():
         batch=16,                   # batch size，根据显存调整
         imgsz=640,                  # 输入图片大小
         workers=4,                  # 数据加载线程数
-        device=[4,5,6,7],      # 训练设备，0 表示第一张 GPU
+        device=0,      # 训练设备，0 表示第一张 GPU
         project="/home/dsj/code/ultralytics/apply/ultralytics/runs/train",       # 保存日志的目录
-        name="yolov11_glassware_labdpics_seg",   # 实验名字
+        name="yolov11_glassware_labdpics_seg_test",   # 实验名字
         optimizer="SGD",            # 也可以选 Adam/AdamW
         lr0=0.01,                   # 初始学习率
         cos_lr=True,                # 是否使用余弦退火学习率调度

@@ -100,7 +100,7 @@ def iou(bbox1, bbox2):
 # 初始化
 # --------------------
 model = YOLO("/home/dsj/code/ultralytics/apply/ultralytics/runs/train/yolov11_glassware/weights/best.pt")  # 替换成你的模型路径
-cap = cv2.VideoCapture("/home/dsj/code/ultralytics/apply/input_2.mp4")
+cap = cv2.VideoCapture("/home/dsj/code/ultralytics/apply/2.mp4")
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter("/home/dsj/code/ultralytics/apply/tracking_output_karman_2_test.mp4", fourcc, cap.get(cv2.CAP_PROP_FPS),

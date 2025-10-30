@@ -7,12 +7,38 @@ import json
 # --------------------
 # 参数
 # --------------------
-MEMORY_TTL = 20   # 丢失多少帧内继续保留目标
+MEMORY_TTL = 5   # 丢失多少帧内继续保留目标
 IOU_THRESH = 0.3  # IoU 阈值用于目标关联
 
 K = np.array([[604.0, 0, 334.7],
               [0, 603.7, 250.7],
               [0,   0,   1]])
+def quat_to_rotmat(qx, qy, qz, qw):
+    q = np.array([qx, qy, qz, qw], dtype=float)
+    q = q / np.linalg.norm(q)
+    x,y,z,w = q
+    R = np.array([
+        [1-2*(y*y+z*z), 2*(x*y-z*w),   2*(x*z+y*w)],
+        [2*(x*y+z*w),   1-2*(x*x+z*z), 2*(y*z-x*w)],
+        [2*(x*z-y*w),   2*(y*z+x*w),   1-2*(x*x+y*y)]
+    ])
+    return R
+
+# --------------------
+# 读取相机位姿文件
+# --------------------
+def load_camera_poses(path):
+    poses = {}
+    with open(path, "r") as f:
+        lines = [ln.strip() for ln in f if ln.strip()]
+    if lines[0].startswith("timestamp"):
+        lines = lines[1:]
+    for i, line in enumerate(lines):
+        ts, x,y,z, qx,qy,qz,qw = line.split(",")
+        R_wc = quat_to_rotmat(float(qx), float(qy), float(qz), float(qw))
+        t_wc = np.array([float(x), float(y), float(z)])
+        poses[i+1] = (R_wc, t_wc)  # 假设第 i+1 帧对应
+    return poses
 
 class BBoxKalman:
     def __init__(self, x1, y1, x2, y2, max_jump=20):
@@ -43,11 +69,7 @@ class BBoxKalman:
         self.last_pos = (cx, cy, w, h)
 
     def step(self, x1=None, y1=None, x2=None, y2=None):
-        """
-        执行一步预测+更新
-        输入: 检测框 (x1, y1, x2, y2)，None 表示检测失败
-        返回: 平滑后的检测框 (x1, y1, x2, y2), (cx, cy)
-        """
+        
         # ---------- 预测 ----------
         self.x = self.F @ self.x
         self.P = self.F @ self.P @ self.F.T + self.Q
@@ -100,11 +122,13 @@ def iou(bbox1, bbox2):
 # 初始化
 # --------------------
 model = YOLO("/home/dsj/code/ultralytics/ultralytics/runs/train/yolov11_glassware/weights/best.pt")  # 替换成你的模型路径
-cap = cv2.VideoCapture("/home/dsj/code/ultralytics/apply/input_2.mp4")
+cap = cv2.VideoCapture("/home/dsj/code/ultralytics/apply/2.mp4")
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter("/home/dsj/code/ultralytics/apply/tracking_output_karman_2.mp4", fourcc, cap.get(cv2.CAP_PROP_FPS),
+out = cv2.VideoWriter("/home/dsj/code/ultralytics/apply/hh.mp4", fourcc, cap.get(cv2.CAP_PROP_FPS),
                       (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
+
+camera_poses_all = load_camera_poses("/home/dsj/code/ultralytics/apply/2.txt")
 
 orb = cv2.ORB_create(1000)
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -134,6 +158,14 @@ while True:
     if not ret:
         break
     frame_id += 1
+
+    if frame_id not in camera_poses_all:
+        continue
+    R_wc, t_wc = camera_poses_all[frame_id]
+    R_cw = R_wc.T
+    t_cw = -R_cw @ t_wc
+    P_curr = K @ np.hstack((R_cw, t_cw.reshape(3,1)))
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # YOLO 检测
@@ -169,6 +201,7 @@ while True:
             trackers[best_id]["ttl"] = MEMORY_TTL
             trackers[best_id]["conf"] = float(conf)
             trackers[best_id]["cls"] = int(cls)
+            trackers[best_id]["pose"] = P_curr
             matched_ids.add(best_id)
         else:
             # 新建 track
@@ -182,7 +215,8 @@ while True:
                 "prev_kp":None,
                 "kp":None,
                 "prev_des":None,
-                "des":None
+                "des":None,
+                "pose":P_curr
             }
             matched_ids.add(next_id)
             next_id += 1
@@ -195,7 +229,7 @@ while True:
     for tid, data in trackers.items():
         x1, y1, x2, y2 = map(int, data["bbox"])
         cx, cy ,w,h= data["kf"].x[0],data["kf"].x[1],data["kf"].x[2],data["kf"].x[3]
-
+        '''
         # 在 ROI 内提取 ORB
         mask = np.zeros(gray.shape, dtype=np.uint8)
         mask[int(cy-h//4):int(cy+h//4), int(cx-w//4):int(cx+w//4)] = 255
@@ -224,35 +258,27 @@ while True:
                     # 保存相机姿态 (3x4 矩阵)
                     pose = np.hstack((R_total, t_total))
                     camera_poses.append(pose)
-
+            '''
                     # 三角测量中心点
-                    cx1, cy1 = data["prev_center"] if data["prev_center"] else (cx, cy)
-                    cx2, cy2 = cx, cy
-                    P1 = K @ np.hstack((R_prev, t_prev))
-                    P2 = K @ np.hstack((R_total, t_total))
-                    pts4d = cv2.triangulatePoints(
-                        P1, P2,
-                        np.array([[cx1], [cy1]]),
-                        np.array([[cx2], [cy2]])
-                    )
-                    pts3d = (pts4d / pts4d[3])[:3].T
-                    trajectory.append(pts3d)
-
-                    R_prev = R_total.copy()
-                    t_prev = t_total.copy()
+        cx1, cy1 = data["prev_center"] if data["prev_center"] else (cx, cy)
+        cx2, cy2 = cx, cy
+        P1 = trackers[tid-1]["prepose"]
+        P2 = trackers[tid]["pose"]
+        #P2 = K @ np.hstack((R_total, t_total))
+        pts4d = cv2.triangulatePoints(
+            P1, P2,
+            np.array([[cx1], [cy1]]),
+            np.array([[cx2], [cy2]])
+        )
+        pts3d = (pts4d / pts4d[3])[:3].T
+        trajectory.append(pts3d)
+        '''
+        R_prev = R_total.copy()
+        t_prev = t_total.copy()
         data["prev_kp"] = data.get("kp", None)
         data["prev_des"] = data.get("des", None)
         data["prev_center"] = (cx, cy)
     # 保存结果 + 画到视频
-        '''
-        # 结果保存
-        frame_objects.append({
-            "id": tid,
-            "bbox": data["bbox"].tolist(),
-            "center": [float(cx), float(cy)],
-            "cls": data["cls"],
-            "conf": data["conf"]
-        })
         '''
         # 画到视频
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -279,9 +305,8 @@ np.savez("/home/dsj/code/ultralytics/apply/trajectories_2.npz",
          camera_poses=camera_poses, 
          object_traj=object_traj)
 # 保存 JSON
-'''
-with open("tracking_results.json", "w") as f:
-    json.dump(results_all, f, indent=2)
-'''
+
 print(f"✅ 视频已保存: tracking_output.mp4")
 #print(f"✅ 结果已保存: tracking_results.json (帧数={len(results_all)})")
+
+

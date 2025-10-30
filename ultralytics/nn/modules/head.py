@@ -284,6 +284,69 @@ class Segment(Detect):
             return x, mc, p
         return (torch.cat([x, mc], 1), p) if self.export else (torch.cat([x[0], mc], 1), (x[1], mc, p))
 
+class Flow(nn.Module):
+    """
+    FlowHead: predict refraction/flow field (u, v) from multi-scale features (P3, P4, P5).
+    
+    Input:
+        x = [P3, P4, P5] where
+            P3: [B, 256, 80, 80]
+            P4: [B, 512, 40, 40]
+            P5: [B, 1024, 20, 20]
+    Output:
+        flow: [B, 2, H, W] (default H=W=640 after upsample)
+    """
+
+    def __init__(self, in_channels=(256, 512, 1024), mid_channels=256, out_channels=2, upsample=True):
+        super(Flow, self).__init__()
+        self.upsample = upsample
+
+        # reduce channel dims to same mid_channels
+        self.reduce3 = nn.Conv2d(in_channels[0], mid_channels, 1)
+        self.reduce4 = nn.Conv2d(in_channels[1], mid_channels, 1)
+        self.reduce5 = nn.Conv2d(in_channels[2], mid_channels, 1)
+
+        # fusion conv
+        self.fuse = nn.Sequential(
+            nn.Conv2d(mid_channels * 3, mid_channels, 3, padding=1, bias=False),
+            nn.BatchNorm2d(mid_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(mid_channels, mid_channels, 3, padding=1, bias=False),
+            nn.BatchNorm2d(mid_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(mid_channels, out_channels, 1)  # 输出2通道 flow(u,v)
+        )
+
+    def forward(self, x, img_size=None):
+        """
+        Args:
+            x: list of feature maps [P3, P4, P5]
+            img_size: target image size (H, W), for upsample output
+        """
+        p3, p4, p5 = x  # unpack
+        B = p3.size(0)
+
+        # channel alignment
+        p3 = self.reduce3(p3)  # [B, C, 80, 80]
+        p4 = self.reduce4(p4)  # [B, C, 40, 40]
+        p5 = self.reduce5(p5)  # [B, C, 20, 20]
+
+        # upsample to P3 resolution
+        p4_up = F.interpolate(p4, size=p3.shape[-2:], mode="nearest")
+        p5_up = F.interpolate(p5, size=p3.shape[-2:], mode="nearest")
+
+        # concat
+        fused = torch.cat([p3, p4_up, p5_up], dim=1)  # [B, 3*C, 80, 80]
+
+        # conv fusion
+        flow = self.fuse(fused)  # [B, 2, 80, 80]
+
+        # final upsample to image size
+        if self.upsample and img_size is not None:
+            flow = F.interpolate(flow, size=img_size, mode="bilinear", align_corners=False)
+
+        return flow
+
 
 class OBB(Detect):
     """
