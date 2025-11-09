@@ -9,7 +9,7 @@
             "name": "Train",
             "type": "debugpy",
             "request": "launch",
-            "program": "/home/dsj/code/ultralytics/apply/robot_demo_tracker.py",
+            "program": "/home/dsj/code/ultralytics/apply/train.py",
             //"python": "/home/robot/ex_2T_HDD/zhaofengan/.conda/envs/eraft/bin/python",
             "python": "/home/dsj/miniconda3/bin/python",
             "console": "integratedTerminal",
