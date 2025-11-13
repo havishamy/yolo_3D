@@ -1,0 +1,17 @@
+# 忽略模型权重文件
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.engine
+*.trt
+*.ckpt
+
+# 忽略日志、缓存和临时文件
+__pycache__/
+*.log
+*.tmp
+*.npy
+*.npz
+*.pkl
+

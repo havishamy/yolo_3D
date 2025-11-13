@@ -1,0 +1,6 @@
+train: /home/dsj/dataset/my_yolo/instances_train2017/images
+val: /home/dsj/dataset/my_yolo/instances_val2017/images
+test: /home/dsj/dataset/my_yolo/instances_val2017/images
+
+nc: 21  # 类别数量
+names: ["alcohol_lamp","conical_flask","glass_dropper_bottle","round_bottom_flask","separatory_funnel","three_neck_flask","beaker","condenser","distillation_flask","dropper","evaporating_dish","funnel","glass_rod","graduated_cylinder","jar","medicine_spoon","plastic_wash_bottle","rubber_tube","test_tube","tube_brush","volumetric_flask"]
