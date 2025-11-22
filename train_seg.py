@@ -14,7 +14,7 @@ def main():
         workers=4,                  # 数据加载线程数
         device=0,      # 训练设备，0 表示第一张 GPU
         project="/home/dsj/code/ultralytics/apply/ultralytics/runs/train",       # 保存日志的目录
-        name="yolov11_seg_baseline",   # 实验名字
+        name="yolov11_seg_baseline_modify",   # 实验名字
         optimizer="SGD",            # 也可以选 Adam/AdamW
         lr0=0.01,                   # 初始学习率
         cos_lr=True,                # 是否使用余弦退火学习率调度

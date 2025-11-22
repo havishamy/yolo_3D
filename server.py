@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 import json
 from ultralytics import YOLO
+from ultralytics.models.sam import SAM2DynamicInteractivePredictor
+import torch
 
 class YOLOTCParser:
     def __init__(self, listen_ip, listen_port):
@@ -15,8 +17,65 @@ class YOLOTCParser:
         print(f"服务器启动，监听 {self.listen_ip}:{self.listen_port}...")
 
         # YOLO模型加载（默认使用yolov8n，可替换为yolov8s/yolov8m等）
-        self.model = YOLO("/home/dsj/code/ultralytics/apply/ultralytics/runs/train/yolov11_glassware/weights/best.pt")  # 自动下载预训练模型
+        self.model = YOLO("/home/dsj/code/ultralytics/apply/ultralytics/runs/train/yolov11_seg_baseline_modify/weights/best.pt")  # 自动下载预训练模型
         print("YOLO模型加载成功")
+        overrides = dict(
+            conf=0.01,
+            task="segment",
+            mode="predict",
+            imgsz=640,  # 适配 640×480 图像
+            model="sam2_t.pt",
+            save=False,
+            device="0" if torch.cuda.is_available() else "cpu")
+        # 仅传入公开参数，不触碰内部属性
+        self.sam2 = SAM2DynamicInteractivePredictor(overrides=overrides,max_obj_num=10)
+
+
+    def sam(self,results,img):
+        detections = []
+        # 用自己的字典记录 ID 与目标信息的映射（不依赖模型内部变量）
+        confs=[]
+        classes=[]
+        box_all=[]
+        obj_ids=[]
+        masks=[]
+        for r in results:
+            boxes = r.boxes
+            for i in len(boxes):
+                box=boxes[i]
+                # 提取坐标（x1,y1,x2,y2）、置信度、类别
+                x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
+                confidence = float(box.conf[0].cpu().numpy())
+                class_name = self.model.names[int(box.cls[0].cpu().numpy())]
+
+                box_all.append([x1, y1, x2, y2])
+                obj_ids.append(i+1)
+                classes.append(class_name)
+                confs.append(confidence)
+                
+            # 记录 ID 与目标信息的映射
+            results_sam = self.sam2(
+            source=img,
+            bboxes=box_all,
+            obj_ids=obj_ids,  # 公开接口要求的参数，稳定可用
+            update_memory=True
+            )
+
+            for i in range(results_sam[0].masks.data.shape[0]):
+                mask = results_sam[0].masks.data[i].cpu().numpy()
+                mask = (mask * 255).astype("uint8")
+                masks.append(mask)
+
+                
+            detections.append({
+                    "class": classes,
+                    "confidence": confs,
+                    "bbox": box_all,
+                    "mask": masks,
+                    "ids": obj_ids
+                })
+            return detections
+
 
     def receive_image(self, client_socket):
         """接收客户端发送的图像"""
@@ -67,29 +126,14 @@ class YOLOTCParser:
 
                     # 2. YOLO识别（conf=0.5过滤低置信度目标）
                     results = self.model(image, conf=0.5)
-
-                    # 3. 解析识别结果
-                    detections = []
-                    for r in results:
-                        boxes = r.boxes
-                        for box in boxes:
-                            # 提取坐标（x1,y1,x2,y2）、置信度、类别
-                            x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
-                            confidence = float(box.conf[0].cpu().numpy())
-                            class_name = self.model.names[int(box.cls[0].cpu().numpy())]
-                            detections.append({
-                                "class": class_name,
-                                "confidence": confidence,
-                                "bbox": [x1, y1, x2, y2]
-                            })
-
-                    # 4. 回传结果
-                    result = {
+                    detections=self.sam(results,image)
+                    results={
                         "success": True,
-                        "detections": detections,
-                        "error": ""
+                        "detections": detections
                     }
-                    self.send_result(client_socket, result)
+
+                    
+                    self.send_result(client_socket,results)
 
             except Exception as e:
                 print(f"处理客户端 {client_addr} 时出错：{str(e)}")

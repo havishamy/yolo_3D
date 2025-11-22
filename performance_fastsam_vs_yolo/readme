@@ -1,0 +1,1 @@
+配合val.py使用，衡量sam和yolo的检测性能，输出为map,mar等指标。

@@ -503,7 +503,7 @@ class MultiViewTriangulator:
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--video', default="/home/dsj/code/ultralytics/apply/v2/v2.mp4")
-    p.add_argument('--model', default='/home/dsj/code/ultralytics/apply/ultralytics/runs/train/yolov11_glassware/weights/best.pt')
+    p.add_argument('--model', default='/home/dsj/code/ultralytics/apply/ultralytics/runs/train/yolov11_seg_baseline_modify/weights/best.pt')
     p.add_argument('--mode', choices=['offline','ros'], default='offline')
     p.add_argument('--poses', help='poses file (npy/npz/csv) for offline mode', default="/home/dsj/code/ultralytics/apply/v2/p2.txt")
     p.add_argument('--base_frame', default='base')

@@ -1,0 +1,26 @@
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95)     Mask(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 19/19 12.5it/s 1.5s
+                   all        300        607       0.99      0.994      0.993      0.956       0.99      0.994      0.993      0.889
+          alcohol_lamp         25         27          1          1      0.995      0.954          1          1      0.995      0.937
+         conical_flask         28         39      0.987          1      0.995      0.989      0.987          1      0.995      0.965
+  glass_dropper_bottle          6          8          1          1      0.995      0.978          1          1      0.995      0.951
+    round_bottom_flask         14         17       0.97          1      0.995      0.979       0.97          1      0.995      0.963
+     separatory_funnel         31         40      0.986          1      0.995      0.958      0.986          1      0.995      0.887
+      three_neck_flask         14         17          1      0.993      0.995      0.978          1      0.993      0.995       0.96
+                beaker        101        150      0.969       0.98       0.99       0.94      0.969       0.98       0.99      0.879
+             condenser         14         16          1      0.983      0.995      0.944          1      0.983      0.995      0.851
+    distillation_flask         19         23          1          1      0.995      0.986          1          1      0.995      0.948
+               dropper         24         35      0.942          1      0.991      0.919      0.942          1      0.991      0.694
+      evaporating_dish         17         29          1          1      0.995      0.983          1          1      0.995      0.978
+                funnel         16         22          1          1      0.995      0.907          1          1      0.995        0.9
+             glass_rod         26         33      0.965          1      0.987      0.938      0.965          1      0.987      0.752
+    graduated_cylinder         21         28          1          1      0.995      0.986          1          1      0.995       0.95
+                   jar         14         14       0.96          1      0.995      0.946       0.96          1      0.995      0.923
+        medicine_spoon          9         12          1      0.997      0.995      0.931          1      0.997      0.995      0.763
+   plastic_wash_bottle          6          6          1          1      0.995       0.94          1          1      0.995       0.98
+           rubber_tube         13         14          1      0.929      0.964      0.953          1      0.929      0.964      0.793
+             test_tube         35         42          1          1      0.995       0.97          1          1      0.995      0.819
+            tube_brush         20         23          1          1      0.995      0.923          1          1      0.995      0.804
+      volumetric_flask          8         12          1          1      0.995      0.976          1          1      0.995      0.974
+Speed: 0.3ms preprocess, 1.0ms inference, 0.0ms loss, 1.1ms postprocess per image
+Results saved to /home/dsj/code/ultralytics/runs/segment/val
+(base) dsj@swwlabserver:~/code/ultralytics/apply$ 
